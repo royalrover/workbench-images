@@ -1,0 +1,28 @@
+#!/bin/bash
+set +e
+mkdir -p /tmp/log/nginx/
+mkdir -p /tmp/var/nginx/
+mkdir -p /tmp/var/sessions/
+mkdir -p /var/log/nginx
+
+export ROOT=/usr/local/pseudo-root #"$( cd "$( /usr/bin/dirname "${BASH_SOURCE[0]}" )" && pwd -P )"
+export PATH=$ROOT/usr/local/bin:$ROOT/usr/local/sbin:$ROOT/usr/bin:$ROOT/usr/sbin:$ROOT/sbin:$ROOT/bin:$ROOT:$PATH
+export LD_LIBRARY_PATH=$ROOT/usr/lib:$ROOT/usr/lib/x86_64-linux-gnu:$ROOT/lib/x86_64-linux-gnu:$ROOT/usr/lib64:$LD_LIBRARY_PATH
+export DOLLAR='$'
+
+# 生成配置文件
+# envsubst < $ROOT/etc/nginx/nginx.template.conf > $ROOT/etc/nginx/nginx.conf
+
+if [ ! -e '/code' ]; then
+  ps aux | grep nginx | grep -v grep|awk -F ' ' '{print $2}' | xargs kill -9 >/dev/null 2>&1
+  ps aux | grep php-fpm | grep -v grep|awk -F ' ' '{print $2}' | xargs kill -9 >/dev/null 2>&1
+fi
+
+echo "start php-fpm"
+php-fpm -c /usr/local/etc/php/php.ini-production -y /usr/local/etc/php-fpm.conf
+echo "start nginx"
+nginx -c /etc/nginx/nginx.conf
+sleep 5
+
+# 查看日志
+tail -f /tmp/var/nginx/access.log /tmp/var/nginx/error.log

@@ -1,0 +1,49 @@
+FROM php:7.2-fpm
+
+RUN set -eux; \
+        docker-php-ext-install \
+                pdo_mysql \
+                sockets \
+        ; 
+RUN set -eux; pecl install redis; \
+        docker-php-ext-enable redis
+
+RUN set -eux; \
+        \
+        curl -L https://getcomposer.org/installer | php; \
+        mv composer.phar /usr/local/bin/composer
+
+RUN chmod -R 777 /tmp/
+
+# Function configuration.
+ENV FC_FUNC_CODE_PATH=/code/
+
+ENV LD_LIBRARY_PATH=/usr/lib:/usr/local/lib
+
+# Create directories.
+RUN mkdir -p ${FC_FUNC_CODE_PATH}
+
+RUN chmod -R 777 ${FC_FUNC_CODE_PATH}
+
+# Change work directory.
+WORKDIR ${FC_FUNC_CODE_PATH}
+
+# make php and php-cgi default memory is 3G, https://aone.alibaba-inc.com/issue/17996176
+RUN cp /usr/local/etc/php/php.ini-production /usr/local/etc/php/php.ini
+RUN echo "memory_limit=3072M" >> /usr/local/etc/php/php.ini
+
+# RUN mv /etc/apt/sources.list /etc/apt/sources.list.bak
+COPY ./debian-jessie-sources.list /etc/apt/sources.list
+
+RUN apt-get update
+
+# install envsubst
+RUN apt-get install -y gettext-base
+
+RUN apt-get install -y nginx
+
+COPY ./php-fpm.conf /usr/local/etc/php-fpm.conf
+
+COPY ./nginx.conf /etc/nginx/nginx.conf
+
+CMD ["bash"]
