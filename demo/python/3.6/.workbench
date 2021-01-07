@@ -1,0 +1,9 @@
+{
+  "fcRouteDefault": [
+    {
+      "apiUri": "/*",
+      "fcHandler": "serverless.handler",
+      "httpMethod": "ANY"
+    }
+  ]
+}
